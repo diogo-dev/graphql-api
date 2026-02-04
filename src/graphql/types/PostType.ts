@@ -17,7 +17,7 @@ export const PostType = new GraphQLObjectType({
       return dataSource 
         .getRepository(Comment)
         .createQueryBuilder("comment")
-        .where("comment.postId = :postId", { postId: parent.id })
+        .where("comment.post_id = :postId", { postId: parent.id })
         .getMany();
       }
     }

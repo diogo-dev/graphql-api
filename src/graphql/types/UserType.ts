@@ -21,7 +21,7 @@ export const UserType = new GraphQLObjectType({
         return dataSource
           .getRepository(Post)
           .createQueryBuilder("post")
-          .where("post.userId = :userId", { userId: parent.id })
+          .where("post.user_id = :userId", { userId: parent.id })
           .getMany();
       }
     }
