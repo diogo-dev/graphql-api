@@ -16,7 +16,7 @@ interface CreateUserArgs {
 
 let userService: UserService | null = null;
 
-function getUserService(): UserService {
+const getUserService = (): UserService => {
   if (!userService) {
     const userRepository = dataSource.getRepository(User);
     userService = new UserService(userRepository);
