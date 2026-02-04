@@ -23,15 +23,15 @@ export class UserService {
   }
 
   async getUserById(id: string): Promise<User | null> {
-    return await this.userRepository.findOne({ where: { id } });
+    return await this.userRepository.findOne({ where: { id }, relations: ['posts'] });
   }
 
   async getUserByEmail(email: string): Promise<User | null> {
-    return await this.userRepository.findOne({ where: { email } });
+    return await this.userRepository.findOne({ where: { email }, relations: ['posts'] });
   }
 
   async getAllUsers(): Promise<User[]> {
-    return await this.userRepository.find();
+    return await this.userRepository.find({ relations: ['posts'] });
   }
 
   async updateUser(id: string, updateData: Partial<User>): Promise<User | null> {

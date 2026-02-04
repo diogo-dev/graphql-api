@@ -26,11 +26,11 @@ export class PostService {
   }
 
   async getPostById(id: string): Promise<Post | null> {
-    return await this.postRepository.findOne({ where: { id } });
+    return await this.postRepository.findOne({ where: { id }, relations: ['comments'] });
   }
 
   async getAllPosts(): Promise<Post[]> {
-    return await this.postRepository.find();
+    return await this.postRepository.find({ relations: ['comments'] });
   }
 
   async updatePost(id: string, updateData: Partial<Post>): Promise<Post | null> {

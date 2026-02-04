@@ -24,6 +24,10 @@ export class CommentService {
     }
   }
 
+  async getAllComments(): Promise<Comment[]> {
+    return await this.commentRepository.find();
+  }
+
   async getCommentById(id: string): Promise<Comment | null> {
     return await this.commentRepository.findOne({ where: { id } });
   }
