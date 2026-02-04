@@ -10,7 +10,7 @@ const dataSourceOptions: DataSourceOptions = {
   database: process.env.DB_NAME,
   synchronize: false,
   entities: ["src/entities/**/*.ts"],
-  migrations: ["src/db/migration/**/*.ts"],
+  migrations: ["src/migrations/**/*.ts"],
   logging: false,
 }
 
@@ -23,4 +23,4 @@ export default dataSource;
 //   })
 //   .catch((err) => {
 //     console.error("Error during Data Source initialization:", err);
-//   });
+//   }); 
