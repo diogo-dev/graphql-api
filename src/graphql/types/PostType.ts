@@ -2,6 +2,17 @@ import { GraphQLID, GraphQLString, GraphQLNonNull, GraphQLObjectType, GraphQLLis
 import { Comment } from "../../entities/Comment";
 import { CommentType } from "./CommentType";
 import dataSource from "../../config/data-source";
+import { CommentService } from "@/services/CommentService";
+
+let commentService: CommentService | null = null;
+
+const getCommentService = (): CommentService => {
+  if (!commentService) {
+    const commentRepository = dataSource.getRepository(Comment);
+    commentService = new CommentService(commentRepository);
+  }
+  return commentService;
+}
 
 export const PostType = new GraphQLObjectType({
   name: "Post",
@@ -14,11 +25,8 @@ export const PostType = new GraphQLObjectType({
     comments: {
     type: new GraphQLList(CommentType),
     resolve(parent) {
-      return dataSource 
-        .getRepository(Comment)
-        .createQueryBuilder("comment")
-        .where("comment.post_id = :postId", { postId: parent.id })
-        .getMany();
+      const service = getCommentService();
+      return service.getCommentsByPostId(parent.id);
       }
     }
   },

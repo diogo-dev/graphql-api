@@ -1,8 +1,18 @@
 import dataSource from "../../config/data-source";
 import { Post } from "../../entities/Post";
 import { PostType } from "./PostType";
+import { PostService } from "@/services/PostService";
 import { GraphQLID, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLString } from "graphql";
 
+let postService: PostService | null = null;
+
+const getPostService = (): PostService => {
+  if (!postService) {
+    const postRepository = dataSource.getRepository(Post);
+    postService = new PostService(postRepository);
+  }
+  return postService;
+}
 
 export const UserType = new GraphQLObjectType({
   name: "User",
@@ -18,11 +28,8 @@ export const UserType = new GraphQLObjectType({
     posts: {
       type: new GraphQLList(PostType),
       resolve(parent) {
-        return dataSource
-          .getRepository(Post)
-          .createQueryBuilder("post")
-          .where("post.user_id = :userId", { userId: parent.id })
-          .getMany();
+        const service = getPostService();
+        return service.getPostsByUserId(parent.id);
       }
     }
   }

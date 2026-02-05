@@ -33,6 +33,13 @@ export class PostService {
     return await this.postRepository.find({ relations: ['comments'] });
   }
 
+  async getPostsByUserId(userId: string): Promise<Post[]> {
+    return await this.postRepository
+      .createQueryBuilder('post')
+      .where('post.user_id = :userId', { userId })
+      .getMany();
+  }
+
   async updatePost(id: string, updateData: Partial<Post>): Promise<Post | null> {
     const post = await this.getPostById(id);
     if (!post) {
