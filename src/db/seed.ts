@@ -79,7 +79,6 @@ export async function seed(
   const allPosts = await postService.getAllPosts();
   for (const post of allPosts) {
     for (let j = 1; j <= 2; j++) {
-      const randomUser = allUsers[Math.floor(Math.random() * allUsers.length)];
       await commentService.createComment({
         content: `This is comment ${j} on post ${post.title}.`,
         postId: post.id,

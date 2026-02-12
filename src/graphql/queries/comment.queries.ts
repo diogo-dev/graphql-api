@@ -34,14 +34,4 @@ export const commentQueries = {
     }
   },
 
-  commentsByPostId: {
-    type: new GraphQLList(CommentType),
-    args: {
-      postId: { type: GraphQLID }
-    },
-    resolve(_: any, args: { postId: string}) {
-      const service = getCommentService();
-      return service.getCommentsByPostId(args.postId);
-    }
-  }
 }
