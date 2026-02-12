@@ -35,5 +35,22 @@ export const commentMutations = {
       });
       return newComment;
     }
+  },
+
+  updateComment: {
+    type: CommentType,
+    args: {
+      id: { type: new GraphQLNonNull(GraphQLString) },
+      content: { type: GraphQLString },
+    },
+    async resolve(_: any, args: { id: string; content?: string }) {
+      const service = getCommentService();
+
+      const updateData: Partial<Comment> = {};
+      if (args.content !== undefined) updateData.content = args.content;
+      
+      const updatedComment = await service.updateComment(args.id, updateData);
+      return updatedComment;
+    }
   }
 }

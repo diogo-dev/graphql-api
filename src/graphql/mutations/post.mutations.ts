@@ -37,5 +37,24 @@ export const postMutations = {
       });
       return newPost;
     }
+  },
+
+  updatePost: {
+    type: PostType,
+    args: {
+      id: { type: new GraphQLNonNull(GraphQLString) },
+      title: { type: GraphQLString },
+      content: { type: GraphQLString },
+    },
+    async resolve(_: any, args: { id: string; title?: string; content?: string }) {
+      const service = getPostService();
+
+      const updateData: Partial<Post> = {};
+      if (args.title !== undefined) updateData.title = args.title;
+      if (args.content !== undefined) updateData.content = args.content;
+      
+      const updatedPost = await service.updatePost(args.id, updateData);
+      return updatedPost;
+    }
   }
 }
