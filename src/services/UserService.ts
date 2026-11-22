@@ -1,13 +1,15 @@
-import dataSource from '../config/data-source';
 import { User } from '../entities/User';
 import { Repository } from 'typeorm';
 import { CreateUserDTO } from '../dto/CreateUserDTO';
 import bcrypt from 'bcrypt';
+import { validateDto } from '../utils/validate';
 
 export class UserService {
   constructor(private userRepository: Repository<User>) {}
 
   async createUser(userData: CreateUserDTO): Promise<User> {
+    await validateDto(CreateUserDTO, userData);
+
     const existingUser = await this.getUserByEmail(userData.email!);
     if (existingUser) {
       throw new Error('User with this email already exists');
@@ -34,10 +36,19 @@ export class UserService {
     return await this.userRepository.find({ relations: ['posts'] });
   }
 
-  async updateUser(id: string, updateData: Partial<User>): Promise<User | null> {
+  async updateUser(id: string, updateData: Partial<CreateUserDTO>): Promise<User | null> {
+    await validateDto(CreateUserDTO, updateData, { partial: true });
+
     const user = await this.getUserById(id);
     if (!user) {
       return null;
+    }
+
+    if (updateData.email && updateData.email !== user.email) {
+      const existingUser = await this.getUserByEmail(updateData.email);
+      if (existingUser) {
+        throw new Error('User with this email already exists');
+      }
     }
 
     return await this.userRepository.save({ ...user, ...updateData });

@@ -20,7 +20,7 @@ export class Post {
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
 
-  @ManyToOne(() => User, user => user.posts, { nullable: true })
+  @ManyToOne(() => User, user => user.posts, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
 

@@ -1,7 +1,8 @@
 import { Repository } from "typeorm";
 import { Post } from "../entities/Post";
 import { CreatePostDTO } from "../dto/CreatePostDTO";
-import { User } from "@/entities/User";
+import { User } from "../entities/User";
+import { validateDto } from "../utils/validate";
 
 export class PostService {
   constructor(
@@ -9,6 +10,8 @@ export class PostService {
   ) {}
 
   async createPost(postData: CreatePostDTO): Promise<Post> {
+    await validateDto(CreatePostDTO, postData);
+
     const post = this.postRepository.create({
       title: postData.title,
       content: postData.content,
@@ -40,7 +43,14 @@ export class PostService {
       .getMany();
   }
 
-  async updatePost(id: string, updateData: Partial<Post>): Promise<Post | null> {
+  async getPostAuthor(postId: string): Promise<User | null> {
+    const post = await this.postRepository.findOne({ where: { id: postId }, relations: ['user'] });
+    return post?.user ?? null;
+  }
+
+  async updatePost(id: string, updateData: Partial<Pick<Post, 'title' | 'content'>>): Promise<Post | null> {
+    await validateDto(CreatePostDTO, updateData, { partial: true });
+
     const post = await this.getPostById(id);
     if (!post) {
       return null;

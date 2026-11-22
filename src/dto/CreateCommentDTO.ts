@@ -1,4 +1,4 @@
-import { IsString, MaxLength, IsNotEmpty } from "class-validator";
+import { IsString, MaxLength, IsNotEmpty, IsUUID } from "class-validator";
 
 export class CreateCommentDTO {
   @IsString()
@@ -6,7 +6,9 @@ export class CreateCommentDTO {
   @IsNotEmpty()
   content: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsUUID()
   postId: string;
+
+  @IsUUID()
+  userId: string;
 }

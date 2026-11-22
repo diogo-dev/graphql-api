@@ -14,7 +14,7 @@ export class User {
   @Column({type: 'varchar', length: 255, unique: true})
   email: string;
 
-  @Column({type: 'varchar', length: 255, unique: true})
+  @Column({type: 'varchar', length: 255})
   password: string;
 
   @Column({type: 'int', nullable: true})
@@ -31,5 +31,8 @@ export class User {
 
   @OneToMany(() => Post, post => post.user)
   posts: Post[];
+
+  @OneToMany(() => Comment, comment => comment.user)
+  comments: Comment[];
   
 }

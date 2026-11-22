@@ -82,6 +82,7 @@ export async function seed(
       await commentService.createComment({
         content: `This is comment ${j} on post ${post.title}.`,
         postId: post.id,
+        userId: allUsers[Math.floor(Math.random() * allUsers.length)].id,
       });
     }
   }

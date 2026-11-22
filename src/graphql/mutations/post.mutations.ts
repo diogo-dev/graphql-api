@@ -1,24 +1,7 @@
-import { PostService } from "@/services/PostService";
+import { GraphQLBoolean, GraphQLID, GraphQLNonNull, GraphQLString } from "graphql";
 import { PostType } from "../types/PostType";
-import dataSource from "../../config/data-source";
-import { Post } from "../../entities/Post";
-import { GraphQLNonNull, GraphQLString } from "graphql";
-
-interface CreatePostArgs {
-  title: string;
-  content: string;
-  userId: string;
-}
-
-let postService: PostService | null = null;
-
-const getPostService = (): PostService => {
-  if (!postService) {
-    const postRepository = dataSource.getRepository(Post);
-    postService = new PostService(postRepository);
-  }
-  return postService;
-}
+import { getPostService } from "../services";
+import { CreatePostDTO } from "../../dto/CreatePostDTO";
 
 export const postMutations = {
   createPost: {
@@ -26,35 +9,37 @@ export const postMutations = {
     args: {
       title: { type: new GraphQLNonNull(GraphQLString) },
       content: { type: new GraphQLNonNull(GraphQLString) },
-      userId: { type: new GraphQLNonNull(GraphQLString) },
+      userId: { type: new GraphQLNonNull(GraphQLID) },
     },
-    async resolve(_: any, args: CreatePostArgs) {
-      const service = getPostService();
-      const newPost = await service.createPost({
-        title: args.title,
-        content: args.content,
-        userId: args.userId,
-      });
-      return newPost;
+    resolve(_: unknown, args: CreatePostDTO) {
+      return getPostService().createPost({ ...args });
     }
   },
 
   updatePost: {
     type: PostType,
     args: {
-      id: { type: new GraphQLNonNull(GraphQLString) },
+      id: { type: new GraphQLNonNull(GraphQLID) },
       title: { type: GraphQLString },
       content: { type: GraphQLString },
     },
-    async resolve(_: any, args: { id: string; title?: string; content?: string }) {
-      const service = getPostService();
-
-      const updateData: Partial<Post> = {};
+    resolve(_: unknown, args: { id: string; title?: string; content?: string }) {
+      const updateData: { title?: string; content?: string } = {};
       if (args.title !== undefined) updateData.title = args.title;
       if (args.content !== undefined) updateData.content = args.content;
-      
-      const updatedPost = await service.updatePost(args.id, updateData);
-      return updatedPost;
+
+      return getPostService().updatePost(args.id, updateData);
     }
-  }
-}
+  },
+
+  deletePost: {
+    type: new GraphQLNonNull(GraphQLBoolean),
+    description: "Deletes a post and, by cascade, its comments. Returns false if not found.",
+    args: {
+      id: { type: new GraphQLNonNull(GraphQLID) },
+    },
+    async resolve(_: unknown, args: { id: string }) {
+      return (await getPostService().deletePost(args.id)) !== null;
+    }
+  },
+};

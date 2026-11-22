@@ -24,7 +24,7 @@ Before running this project, make sure you have installed:
 ## 🛠️ Technologies
 
 - **Node.js** with **Express**
-- **GraphQL** with express-graphql
+- **GraphQL** served with [graphql-http](https://github.com/graphql/graphql-http) (GraphQL-over-HTTP spec compliant)
 - **TypeScript**
 - **TypeORM** - Database ORM
 - **PostgreSQL** - Database
@@ -83,7 +83,7 @@ The server will start at `http://localhost:3000` (or your configured PORT).
 
 ### GraphQL Playground
 
-Access the GraphQL playground at: `http://localhost:3000/graphql`
+Open `http://localhost:3000/graphql` in a browser to use GraphiQL (served only when `NODE_ENV` is not `production`). API clients send `POST` (or `GET ?query=`) requests to the same URL.
 
 ## 📂 Project Structure
 
@@ -167,7 +167,10 @@ yarn migration:revert
 The API manages three main entities:
 - **Users** - User accounts 
 - **Posts** - Blog posts 
-- **Comments** - Comments on posts
+- **Comments** - Comments on posts, written by users
+
+Deleting a user cascades to their posts and comments; deleting a post cascades to its comments.
+Inputs are validated with `class-validator` before they reach the database.
 
 ### Example Queries
 
@@ -192,6 +195,24 @@ mutation {
     title
     content
   }
+}
+```
+
+**Comment on a post:**
+```graphql
+mutation {
+  createComment(content: "Nice post!", postId: "<post-uuid>", userId: "<user-uuid>") {
+    id
+    content
+    author { name }
+  }
+}
+```
+
+**Delete a post** (returns `true`, or `false` if it did not exist):
+```graphql
+mutation {
+  deletePost(id: "<post-uuid>")
 }
 ```
 

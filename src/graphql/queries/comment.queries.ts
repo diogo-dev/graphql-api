@@ -1,37 +1,22 @@
-import { GraphQLID, GraphQLList, GraphQLString } from "graphql";
+import { GraphQLID, GraphQLList, GraphQLNonNull } from "graphql";
 import { CommentType } from "../types/CommentType";
-import { CommentService } from "../../services/CommentService";
-import { Comment } from "../../entities/Comment";
-import dataSource from "../../config/data-source";
-
-let commentService: CommentService | null = null;
-
-const getCommentService = (): CommentService => {
-  if (!commentService) {
-    const commentRepository = dataSource.getRepository(Comment);
-    commentService = new CommentService(commentRepository);
-  }
-  return commentService;
-}
+import { getCommentService } from "../services";
 
 export const commentQueries = {
   comments: {
     type: new GraphQLList(CommentType),
     resolve() {
-      const service = getCommentService();
-      return service.getAllComments();
+      return getCommentService().getAllComments();
     }
   },
 
   commentById: {
     type: CommentType,
     args: {
-      id: { type: GraphQLID }
+      id: { type: new GraphQLNonNull(GraphQLID) }
     },
-    resolve(_: any, args: { id: string }) {
-      const service = getCommentService();
-      return service.getCommentById(args.id);
+    resolve(_: unknown, args: { id: string }) {
+      return getCommentService().getCommentById(args.id);
     }
   },
-
-}
+};

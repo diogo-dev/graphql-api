@@ -1,39 +1,22 @@
-import { PostService } from "../../services/PostService"
-import dataSource from "../../config/data-source"
-import { Post } from "../../entities/Post";
-import { GraphQLID, GraphQLList } from "graphql";
+import { GraphQLID, GraphQLList, GraphQLNonNull } from "graphql";
 import { PostType } from "../types/PostType";
-
-let postService: PostService | null = null;
-
-const getPostService = (): PostService => {
-  if (!postService) {
-    const postRepository = dataSource.getRepository(Post);
-    postService = new PostService(postRepository);
-  }
-
-  return postService;
-}
+import { getPostService } from "../services";
 
 export const postQueries = {
-
   posts: {
     type: new GraphQLList(PostType),
     resolve() {
-      const service = getPostService();
-      return service.getAllPosts();
+      return getPostService().getAllPosts();
     }
   },
 
   postById: {
     type: PostType,
     args: {
-      id: { type: GraphQLID }
+      id: { type: new GraphQLNonNull(GraphQLID) }
     },
-    resolve(_: any, args: { id: string }) {
-      const service = getPostService();
-      return service.getPostById(args.id);
+    resolve(_: unknown, args: { id: string }) {
+      return getPostService().getPostById(args.id);
     },
   }
-
-}
+};

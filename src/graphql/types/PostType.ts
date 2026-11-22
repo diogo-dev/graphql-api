@@ -1,33 +1,34 @@
-import { GraphQLID, GraphQLString, GraphQLNonNull, GraphQLObjectType, GraphQLList } from "graphql";
-import { Comment } from "../../entities/Comment";
+import { GraphQLID, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLString } from "graphql";
+import { Post } from "../../entities/Post";
 import { CommentType } from "./CommentType";
-import dataSource from "../../config/data-source";
-import { CommentService } from "@/services/CommentService";
+import { UserType } from "./UserType";
+import { isoDateField } from "./scalars";
+import { getCommentService, getPostService } from "../services";
 
-let commentService: CommentService | null = null;
-
-const getCommentService = (): CommentService => {
-  if (!commentService) {
-    const commentRepository = dataSource.getRepository(Comment);
-    commentService = new CommentService(commentRepository);
-  }
-  return commentService;
-}
-
-export const PostType = new GraphQLObjectType({
+export const PostType: GraphQLObjectType = new GraphQLObjectType<Post>({
   name: "Post",
   description: "A blog post created by a user",
-  fields: {
+  fields: () => ({
     id: { type: new GraphQLNonNull(GraphQLID) },
     title: { type: new GraphQLNonNull(GraphQLString) },
     content: { type: new GraphQLNonNull(GraphQLString) },
+    createdAt: isoDateField<Post>("createdAt"),
+    updatedAt: isoDateField<Post>("updatedAt"),
+
+    author: {
+      type: UserType,
+      resolve(parent) {
+        // Use the relation when it was loaded in full; otherwise fetch it.
+        if (parent.user?.email) return parent.user;
+        return getPostService().getPostAuthor(parent.id);
+      }
+    },
 
     comments: {
-    type: new GraphQLList(CommentType),
-    resolve(parent) {
-      const service = getCommentService();
-      return service.getCommentsByPostId(parent.id);
+      type: new GraphQLList(CommentType),
+      resolve(parent) {
+        return getCommentService().getCommentsByPostId(parent.id);
       }
     }
-  },
-})
+  }),
+});

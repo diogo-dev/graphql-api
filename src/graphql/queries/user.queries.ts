@@ -1,48 +1,32 @@
-import { GraphQLID, GraphQLList, GraphQLString } from "graphql";
+import { GraphQLID, GraphQLList, GraphQLNonNull, GraphQLString } from "graphql";
 import { UserType } from "../types/UserType";
-import { UserService } from "../../services/UserService";
-import { User } from "../../entities/User";
-import dataSource from "../../config/data-source";
-
-let userService: UserService | null = null;
-
-const getUserService = (): UserService => {
-  if (!userService) {
-    const userRepository = dataSource.getRepository(User);
-    userService = new UserService(userRepository);
-  }
-  return userService;
-}
+import { getUserService } from "../services";
 
 export const userQueries = {
-  
   users: {
     type: new GraphQLList(UserType),
     resolve() {
-      const service = getUserService();
-      return service.getAllUsers();
+      return getUserService().getAllUsers();
     }
   },
 
   userById: {
     type: UserType,
     args: {
-      id: { type: GraphQLID }
+      id: { type: new GraphQLNonNull(GraphQLID) }
     },
-    resolve(_: any, args: { id: string }) {
-      const service = getUserService();
-      return service.getUserById(args.id);
+    resolve(_: unknown, args: { id: string }) {
+      return getUserService().getUserById(args.id);
     }
   },
 
   userByEmail: {
     type: UserType,
     args: {
-      email: { type: GraphQLString}
+      email: { type: new GraphQLNonNull(GraphQLString) }
     },
-    resolve(_: any, args: { email: string} ) {
-      const service = getUserService();
-      return service.getUserByEmail(args.email);
+    resolve(_: unknown, args: { email: string }) {
+      return getUserService().getUserByEmail(args.email);
     }
   }
-}
+};

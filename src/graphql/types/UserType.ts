@@ -1,36 +1,26 @@
-import dataSource from "../../config/data-source";
-import { Post } from "../../entities/Post";
+import { GraphQLFloat, GraphQLID, GraphQLInt, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLString } from "graphql";
+import { User } from "../../entities/User";
 import { PostType } from "./PostType";
-import { PostService } from "@/services/PostService";
-import { GraphQLID, GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLString } from "graphql";
+import { isoDateField } from "./scalars";
+import { getPostService } from "../services";
 
-let postService: PostService | null = null;
-
-const getPostService = (): PostService => {
-  if (!postService) {
-    const postRepository = dataSource.getRepository(Post);
-    postService = new PostService(postRepository);
-  }
-  return postService;
-}
-
-export const UserType = new GraphQLObjectType({
+export const UserType: GraphQLObjectType = new GraphQLObjectType<User>({
   name: "User",
   description: "A user in the system",
-  fields: {
-    id: {type: new GraphQLNonNull(GraphQLID)},
-    name: {type: new GraphQLNonNull(GraphQLString)},
-    email: {type: new GraphQLNonNull(GraphQLString)},
-    age: {type: GraphQLString},
-    height: {type: GraphQLString},
-    weight: {type: GraphQLString},
+  fields: () => ({
+    id: { type: new GraphQLNonNull(GraphQLID) },
+    name: { type: new GraphQLNonNull(GraphQLString) },
+    email: { type: new GraphQLNonNull(GraphQLString) },
+    age: { type: GraphQLInt },
+    height: { type: GraphQLFloat },
+    weight: { type: GraphQLFloat },
+    createdAt: isoDateField<User>("createdAt"),
 
     posts: {
       type: new GraphQLList(PostType),
       resolve(parent) {
-        const service = getPostService();
-        return service.getPostsByUserId(parent.id);
+        return getPostService().getPostsByUserId(parent.id);
       }
     }
-  }
-})
+  })
+});

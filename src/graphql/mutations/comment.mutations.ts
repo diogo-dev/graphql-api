@@ -1,56 +1,43 @@
-import { GraphQLNonNull, GraphQLString } from 'graphql';
+import { GraphQLBoolean, GraphQLID, GraphQLNonNull, GraphQLString } from 'graphql';
 import { CommentType } from '../types/CommentType';
-import { CommentService } from '../../services/CommentService';
-import dataSource from '../../config/data-source';
-import { Comment } from '../../entities/Comment';
-
-
-interface CreateCommentArgs {
-  content: string;
-  postId: string;
-}
-
-let commentService: CommentService | null = null;
-
-const getCommentService = (): CommentService => {
-  if (!commentService) {
-    const commentRepository = dataSource.getRepository(Comment);
-    commentService = new CommentService(commentRepository);
-  }
-  return commentService;
-}
+import { getCommentService } from '../services';
+import { CreateCommentDTO } from '../../dto/CreateCommentDTO';
 
 export const commentMutations = {
   createComment: {
     type: CommentType,
     args: {
       content: { type: new GraphQLNonNull(GraphQLString) },
-      postId: { type: new GraphQLNonNull(GraphQLString) },
+      postId: { type: new GraphQLNonNull(GraphQLID) },
+      userId: { type: new GraphQLNonNull(GraphQLID) },
     },
-    async resolve(_: any, args: CreateCommentArgs) {
-      const service = getCommentService();
-      const newComment = await service.createComment({
-        content: args.content,
-        postId: args.postId,
-      });
-      return newComment;
+    resolve(_: unknown, args: CreateCommentDTO) {
+      return getCommentService().createComment({ ...args });
     }
   },
 
   updateComment: {
     type: CommentType,
     args: {
-      id: { type: new GraphQLNonNull(GraphQLString) },
+      id: { type: new GraphQLNonNull(GraphQLID) },
       content: { type: GraphQLString },
     },
-    async resolve(_: any, args: { id: string; content?: string }) {
-      const service = getCommentService();
-
-      const updateData: Partial<Comment> = {};
+    resolve(_: unknown, args: { id: string; content?: string }) {
+      const updateData: { content?: string } = {};
       if (args.content !== undefined) updateData.content = args.content;
-      
-      const updatedComment = await service.updateComment(args.id, updateData);
-      return updatedComment;
+
+      return getCommentService().updateComment(args.id, updateData);
     }
-  }
-}
+  },
+
+  deleteComment: {
+    type: new GraphQLNonNull(GraphQLBoolean),
+    description: "Deletes a comment. Returns false if not found.",
+    args: {
+      id: { type: new GraphQLNonNull(GraphQLID) },
+    },
+    async resolve(_: unknown, args: { id: string }) {
+      return (await getCommentService().deleteComment(args.id)) !== null;
+    }
+  },
+};

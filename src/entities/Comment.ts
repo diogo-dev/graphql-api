@@ -1,5 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Post } from "./Post";
+import { User } from "./User";
 
 @Entity()
 export class Comment {
@@ -13,7 +14,12 @@ export class Comment {
   @Column({ name: 'created_at', type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @ManyToOne(() => Post, post => post.comments, { nullable: true })
+  @ManyToOne(() => Post, post => post.comments, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'post_id' })
   post: Post;
+
+  // nullable: comments created before authors were tracked have no user
+  @ManyToOne(() => User, user => user.comments, { nullable: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 }

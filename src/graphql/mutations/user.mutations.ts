@@ -1,33 +1,14 @@
-
+import { GraphQLBoolean, GraphQLFloat, GraphQLID, GraphQLInt, GraphQLNonNull, GraphQLString } from "graphql";
 import { UserType } from "../types/UserType";
-import { UserService } from "../../services/UserService";
-import dataSource from "../../config/data-source";
-import { User } from "../../entities/User";
-import { GraphQLFloat, GraphQLInt, GraphQLNonNull, GraphQLString } from "graphql";
+import { getUserService } from "../services";
+import { CreateUserDTO } from "../../dto/CreateUserDTO";
 
-interface CreateUserArgs {
-  name: string;
-  email: string;
-  password: string;
-  age?: number;
-  height?: number;
-  weight?: number;
-}
-
-let userService: UserService | null = null;
-
-const getUserService = (): UserService => {
-  if (!userService) {
-    const userRepository = dataSource.getRepository(User);
-    userService = new UserService(userRepository);
-  }
-  return userService;
-}
+type UpdateUserArgs = Partial<Omit<CreateUserDTO, "password">> & { id: string };
 
 export const userMutations = {
   createUser: {
-      type: UserType,
-      args: {
+    type: UserType,
+    args: {
       name: { type: new GraphQLNonNull(GraphQLString) },
       email: { type: new GraphQLNonNull(GraphQLString) },
       password: { type: new GraphQLNonNull(GraphQLString) },
@@ -35,44 +16,38 @@ export const userMutations = {
       height: { type: GraphQLFloat },
       weight: { type: GraphQLFloat },
     },
-    async resolve(_: any, args: CreateUserArgs) {
-      const service = getUserService();
-      const newUser = await service.createUser({
-        name: args.name,
-        email: args.email,
-        password: args.password,
-        age: args.age,
-        height: args.height,
-        weight: args.weight,
-      });
-      return newUser;
+    resolve(_: unknown, args: CreateUserDTO) {
+      return getUserService().createUser({ ...args });
     }
   },
 
   updateUser: {
     type: UserType,
     args: {
-      id: { type: new GraphQLNonNull(GraphQLString) },
+      id: { type: new GraphQLNonNull(GraphQLID) },
       name: { type: GraphQLString },
       email: { type: GraphQLString },
       age: { type: GraphQLInt },
       height: { type: GraphQLFloat },
       weight: { type: GraphQLFloat },
     },
-    async resolve(_: any, args: Partial<CreateUserArgs> & { id: string }) {
-      const service = getUserService();
-      
-      // Only include fields that are actually provided
-      const updateData: Partial<CreateUserArgs> = {};
-      if (args.name !== undefined) updateData.name = args.name;
-      if (args.email !== undefined) updateData.email = args.email;
-      if (args.age !== undefined) updateData.age = args.age;
-      if (args.height !== undefined) updateData.height = args.height;
-      if (args.weight !== undefined) updateData.weight = args.weight;
-      
-      const updatedUser = await service.updateUser(args.id, updateData);
-      return updatedUser;
+    resolve(_: unknown, { id, ...fields }: UpdateUserArgs) {
+      // Only include fields that were actually provided
+      const updateData = Object.fromEntries(
+        Object.entries(fields).filter(([, value]) => value !== undefined)
+      );
+      return getUserService().updateUser(id, updateData);
     }
   },
-  
-}
+
+  deleteUser: {
+    type: new GraphQLNonNull(GraphQLBoolean),
+    description: "Deletes a user and, by cascade, their posts and comments. Returns false if not found.",
+    args: {
+      id: { type: new GraphQLNonNull(GraphQLID) },
+    },
+    async resolve(_: unknown, args: { id: string }) {
+      return (await getUserService().deleteUser(args.id)) !== null;
+    }
+  },
+};
