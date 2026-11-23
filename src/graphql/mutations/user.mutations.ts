@@ -32,7 +32,6 @@ export const userMutations = {
       weight: { type: GraphQLFloat },
     },
     resolve(_: unknown, { id, ...fields }: UpdateUserArgs) {
-      // Only include fields that were actually provided
       const updateData = Object.fromEntries(
         Object.entries(fields).filter(([, value]) => value !== undefined)
       );

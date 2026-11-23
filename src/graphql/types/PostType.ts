@@ -18,7 +18,6 @@ export const PostType: GraphQLObjectType = new GraphQLObjectType<Post>({
     author: {
       type: UserType,
       resolve(parent) {
-        // Use the relation when it was loaded in full; otherwise fetch it.
         if (parent.user?.email) return parent.user;
         return getPostService().getPostAuthor(parent.id);
       }

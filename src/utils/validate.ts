@@ -1,10 +1,5 @@
 import { validate } from "class-validator";
 
-/**
- * Validates plain data against a class-validator decorated DTO class.
- * With `partial: true`, missing properties are skipped (useful for updates).
- * Throws an Error listing every failed constraint.
- */
 export async function validateDto<T extends object>(
   DtoClass: new () => T,
   data: Partial<T>,

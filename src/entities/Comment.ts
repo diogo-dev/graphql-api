@@ -18,7 +18,6 @@ export class Comment {
   @JoinColumn({ name: 'post_id' })
   post: Post;
 
-  // nullable: comments created before authors were tracked have no user
   @ManyToOne(() => User, user => user.comments, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;

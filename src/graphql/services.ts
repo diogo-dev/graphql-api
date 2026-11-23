@@ -6,7 +6,6 @@ import { UserService } from "../services/UserService";
 import { PostService } from "../services/PostService";
 import { CommentService } from "../services/CommentService";
 
-// Lazily created so repositories are only requested after the DataSource is initialized.
 let userService: UserService | null = null;
 let postService: PostService | null = null;
 let commentService: CommentService | null = null;

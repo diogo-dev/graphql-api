@@ -1,4 +1,3 @@
-// Minimal GraphiQL page served from a CDN (graphql-http ships no IDE of its own).
 export const graphiqlHtml = `<!doctype html>
 <html lang="en">
   <head>

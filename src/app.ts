@@ -5,8 +5,7 @@ import { graphiqlHtml } from './graphql/graphiql';
 
 const app = express();
 
-// Serve the GraphiQL IDE to browsers outside production.
-// Requests carrying a `query` param (or non-HTML Accept headers) fall through to the API handler.
+// Browsers get GraphiQL; API requests fall through to the handler
 if (process.env.NODE_ENV !== 'production') {
   app.get('/graphql', (req, res, next) => {
     if (req.accepts(['application/json', 'text/html']) === 'text/html' && !req.query.query) {
