@@ -1,6 +1,9 @@
 import { GraphQLID, GraphQLList, GraphQLNonNull, GraphQLString } from "graphql";
 import { UserType } from "../types/UserType";
 import { getUserService } from "../services";
+import type { GraphQLContext } from "../context";
+import { requireRole } from "../guards";
+import { UserRole } from "../../entities/User";
 
 export const userQueries = {
   users: {
@@ -22,10 +25,12 @@ export const userQueries = {
 
   userByEmail: {
     type: UserType,
+    description: "Admin only",
     args: {
       email: { type: new GraphQLNonNull(GraphQLString) }
     },
-    resolve(_: unknown, args: { email: string }) {
+    resolve(_: unknown, args: { email: string }, ctx: GraphQLContext) {
+      requireRole(ctx, UserRole.ADMIN);
       return getUserService().getUserByEmail(args.email);
     }
   }

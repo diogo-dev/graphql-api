@@ -2,6 +2,7 @@ import express from 'express';
 import { createHandler } from 'graphql-http/lib/use/express';
 import schema from './graphql/schema';
 import { graphiqlHtml } from './graphql/graphiql';
+import { buildContext } from './graphql/context';
 
 const app = express();
 
@@ -16,6 +17,6 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-app.all('/graphql', createHandler({ schema }));
+app.all('/graphql', createHandler({ schema, context: buildContext }));
 
 export default app;

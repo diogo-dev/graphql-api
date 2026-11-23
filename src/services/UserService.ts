@@ -1,4 +1,4 @@
-import { User } from '../entities/User';
+import { User, UserRole } from '../entities/User';
 import { Repository } from 'typeorm';
 import { CreateUserDTO } from '../dto/CreateUserDTO';
 import bcrypt from 'bcrypt';
@@ -59,6 +59,11 @@ export class UserService {
     const hashedPassword = await bcrypt.hash(newPassword, salt);
     await this.userRepository.update(id, { password: hashedPassword });
     return this.getUserById(id);
+  }
+
+  async setUserRole(id: string, role: UserRole): Promise<User | null> {
+    const result = await this.userRepository.update(id, { role });
+    return result.affected ? this.getUserById(id) : null;
   }
 
   async deleteUser(id: string): Promise<User | null> {

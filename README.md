@@ -9,6 +9,8 @@ A full-featured GraphQL API built with Node.js, Express, TypeORM, and PostgreSQL
 - **TypeScript** for type safety
 - **Database migrations** for version control
 - **Database seeding** for initial data
+- **JWT authentication** with rotating refresh tokens and reuse detection
+- **Role-based authorization** (USER / ADMIN) and ownership checks
 - **BCrypt** for password hashing
 - **Class Validator** for DTO validation
 
@@ -55,7 +57,12 @@ Before running this project, make sure you have installed:
    DB_USERNAME=your_username
    DB_PASSWORD=your_password
    DB_NAME=your_database
+   JWT_ACCESS_SECRET=a_long_random_string
+   JWT_ACCESS_EXPIRES_IN=15m
+   REFRESH_TOKEN_TTL_DAYS=7
    ```
+
+   Generate a secret with `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`.
 
 4. **Start PostgreSQL with Docker**
    ```bash
@@ -71,6 +78,8 @@ Before running this project, make sure you have installed:
    ```bash
    yarn seed
    ```
+
+   Seeded users all have password `123456`; `admin@example.com` has the ADMIN role.
 
 ## 🚀 Running the Application
 
@@ -172,25 +181,57 @@ The API manages three main entities:
 Deleting a user cascades to their posts and comments; deleting a post cascades to its comments.
 Inputs are validated with `class-validator` before they reach the database.
 
+## 🔐 Authentication
+
+1. `register` or `login` returns an `accessToken` (JWT, short-lived) and a `refreshToken` (opaque, long-lived).
+2. Send the access token on every request: `Authorization: Bearer <accessToken>`. In GraphiQL, add it in the **Headers** tab as `{ "Authorization": "Bearer <accessToken>" }`.
+3. When the access token expires, call `refreshToken(token: "<refreshToken>")` to get a new pair. Each refresh token works once; reusing an old one revokes all of that user's sessions.
+4. `logout(refreshToken: "...")` revokes a refresh token. `changePassword` revokes all of them.
+
+```graphql
+mutation {
+  login(email: "alice@example.com", password: "123456") {
+    accessToken
+    refreshToken
+    user { id name role }
+  }
+}
+```
+
+### Permissions
+
+| Action | Anonymous | User | Admin |
+|---|---|---|---|
+| Read users, posts, comments | ✅ | ✅ | ✅ |
+| See a user's `email` | ❌ | own only | ✅ |
+| `userByEmail` | ❌ | ❌ | ✅ |
+| `createPost`, `createComment` | ❌ | ✅ (as themself) | ✅ |
+| Update / delete a post or comment | ❌ | own only | ✅ |
+| `updateUser`, `deleteUser` | ❌ | own account | ✅ |
+| `setUserRole` | ❌ | ❌ | ✅ |
+
+Errors carry `extensions.code`: `UNAUTHENTICATED` (missing or invalid token) or `FORBIDDEN` (not allowed).
+
 ### Example Queries
 
-**Get all users:**
+**Get the logged-in user:**
 ```graphql
 query {
-  users {
+  me {
     id
     name
     email
+    posts { title }
   }
 }
 ```
 
 ### Example Mutations
 
-**Create a post:**
+**Create a post** (requires a token; the author is the logged-in user):
 ```graphql
 mutation {
-  createPost(title: "My Post", content: "Post content", userId: "1") {
+  createPost(title: "My Post", content: "Post content") {
     id
     title
     content
@@ -201,7 +242,7 @@ mutation {
 **Comment on a post:**
 ```graphql
 mutation {
-  createComment(content: "Nice post!", postId: "<post-uuid>", userId: "<user-uuid>") {
+  createComment(content: "Nice post!", postId: "<post-uuid>") {
     id
     content
     author { name }

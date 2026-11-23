@@ -5,11 +5,14 @@ import { postQueries } from "./queries/post.queries";
 import { commentQueries } from "./queries/comment.queries";
 import { postMutations } from "./mutations/post.mutations";
 import { commentMutations } from "./mutations/comment.mutations";
+import { authQueries } from "./queries/auth.queries";
+import { authMutations } from "./mutations/auth.mutations";
 
 
 const RootQuery = new GraphQLObjectType({
   name: "RootQueryType",
   fields: {
+    ...authQueries,
     ...userQueries,
     ...postQueries,
     ...commentQueries,
@@ -19,6 +22,7 @@ const RootQuery = new GraphQLObjectType({
 const RootMutation = new GraphQLObjectType({
   name: "RootMutationType",
   fields: {
+    ...authMutations,
     ...userMutations,
     ...postMutations,
     ...commentMutations

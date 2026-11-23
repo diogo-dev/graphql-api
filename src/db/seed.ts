@@ -1,6 +1,7 @@
 import { UserService } from "../services/UserService";
 import { PostService } from "../services/PostService";
 import { CommentService } from "../services/CommentService";
+import { UserRole } from "../entities/User";
 
 export async function seed(
   userService: UserService,
@@ -60,7 +61,10 @@ export async function seed(
   ];
 
   for (const userData of users) {
-    await userService.createUser(userData);
+    const user = await userService.createUser(userData);
+    if (user.email === "admin@example.com") {
+      await userService.setUserRole(user.id, UserRole.ADMIN);
+    }
   }
 
   // Seed Posts

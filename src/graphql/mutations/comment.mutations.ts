@@ -1,7 +1,19 @@
 import { GraphQLBoolean, GraphQLID, GraphQLNonNull, GraphQLString } from 'graphql';
 import { CommentType } from '../types/CommentType';
 import { getCommentService } from '../services';
-import { CreateCommentDTO } from '../../dto/CreateCommentDTO';
+import type { GraphQLContext } from '../context';
+import { requireAuth, requireOwnerOrAdmin } from '../guards';
+
+async function assertCanModifyComment(ctx: GraphQLContext, commentId: string): Promise<boolean> {
+  requireAuth(ctx);
+  const service = getCommentService();
+  if (!(await service.getCommentById(commentId))) {
+    return false;
+  }
+  const author = await service.getCommentAuthor(commentId);
+  requireOwnerOrAdmin(ctx, author?.id);
+  return true;
+}
 
 export const commentMutations = {
   createComment: {
@@ -9,10 +21,10 @@ export const commentMutations = {
     args: {
       content: { type: new GraphQLNonNull(GraphQLString) },
       postId: { type: new GraphQLNonNull(GraphQLID) },
-      userId: { type: new GraphQLNonNull(GraphQLID) },
     },
-    resolve(_: unknown, args: CreateCommentDTO) {
-      return getCommentService().createComment({ ...args });
+    resolve(_: unknown, args: { content: string; postId: string }, ctx: GraphQLContext) {
+      const user = requireAuth(ctx);
+      return getCommentService().createComment({ ...args, userId: user.id });
     }
   },
 
@@ -22,7 +34,11 @@ export const commentMutations = {
       id: { type: new GraphQLNonNull(GraphQLID) },
       content: { type: GraphQLString },
     },
-    resolve(_: unknown, args: { id: string; content?: string }) {
+    async resolve(_: unknown, args: { id: string; content?: string }, ctx: GraphQLContext) {
+      if (!(await assertCanModifyComment(ctx, args.id))) {
+        return null;
+      }
+
       const updateData: { content?: string } = {};
       if (args.content !== undefined) updateData.content = args.content;
 
@@ -36,7 +52,10 @@ export const commentMutations = {
     args: {
       id: { type: new GraphQLNonNull(GraphQLID) },
     },
-    async resolve(_: unknown, args: { id: string }) {
+    async resolve(_: unknown, args: { id: string }, ctx: GraphQLContext) {
+      if (!(await assertCanModifyComment(ctx, args.id))) {
+        return false;
+      }
       return (await getCommentService().deleteComment(args.id)) !== null;
     }
   },
